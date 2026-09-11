@@ -1,0 +1,3 @@
+.env
+__pycache__/
+support_sessions.db

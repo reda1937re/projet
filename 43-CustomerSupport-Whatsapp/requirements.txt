@@ -1,0 +1,6 @@
+fastapi==0.121.0
+uvicorn==0.38.0
+requests==2.32.3
+agno==2.8.7
+groq==0.37.1
+python-dotenv==1.2.1
