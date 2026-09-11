@@ -1,0 +1,1326 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Tableau de bord de suivi fitness personnel avec visualisation des activités sportives">
+    <title>Fitness Tracker — Tableau de Bord</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"></script>
+    <style>
+        /* ========== CSS RESET & VARIABLES ========== */
+        *, *::before, *::after {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --bg-primary: #0a0e1a;
+            --bg-secondary: #111827;
+            --bg-card: rgba(17, 24, 39, 0.7);
+            --bg-card-hover: rgba(30, 41, 59, 0.8);
+            --border-glass: rgba(255, 255, 255, 0.08);
+            --border-glass-hover: rgba(255, 255, 255, 0.15);
+            --text-primary: #f1f5f9;
+            --text-secondary: #94a3b8;
+            --text-muted: #64748b;
+            --accent-blue: #3b82f6;
+            --accent-blue-glow: rgba(59, 130, 246, 0.3);
+            --accent-purple: #8b5cf6;
+            --accent-purple-glow: rgba(139, 92, 246, 0.3);
+            --accent-green: #10b981;
+            --accent-green-glow: rgba(16, 185, 129, 0.3);
+            --accent-orange: #f59e0b;
+            --accent-orange-glow: rgba(245, 158, 11, 0.3);
+            --accent-pink: #ec4899;
+            --accent-pink-glow: rgba(236, 72, 153, 0.3);
+            --accent-cyan: #06b6d4;
+            --radius-sm: 8px;
+            --radius-md: 12px;
+            --radius-lg: 16px;
+            --radius-xl: 20px;
+            --shadow-sm: 0 2px 8px rgba(0,0,0,0.3);
+            --shadow-md: 0 4px 24px rgba(0,0,0,0.4);
+            --shadow-lg: 0 8px 40px rgba(0,0,0,0.5);
+            --transition-fast: 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+            --transition-med: 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            --transition-slow: 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            min-height: 100vh;
+            overflow-x: hidden;
+            line-height: 1.6;
+        }
+
+        /* ========== ANIMATED BACKGROUND ========== */
+        .bg-gradient {
+            position: fixed;
+            top: 0; left: 0;
+            width: 100%; height: 100%;
+            z-index: 0;
+            overflow: hidden;
+            pointer-events: none;
+        }
+
+        .bg-gradient .orb {
+            position: absolute;
+            border-radius: 50%;
+            filter: blur(80px);
+            opacity: 0.15;
+            animation: float 20s ease-in-out infinite;
+        }
+
+        .bg-gradient .orb:nth-child(1) {
+            width: 500px; height: 500px;
+            background: var(--accent-blue);
+            top: -10%; left: -5%;
+            animation-delay: 0s;
+        }
+
+        .bg-gradient .orb:nth-child(2) {
+            width: 400px; height: 400px;
+            background: var(--accent-purple);
+            top: 50%; right: -5%;
+            animation-delay: -7s;
+            animation-duration: 25s;
+        }
+
+        .bg-gradient .orb:nth-child(3) {
+            width: 350px; height: 350px;
+            background: var(--accent-green);
+            bottom: -5%; left: 30%;
+            animation-delay: -14s;
+            animation-duration: 22s;
+        }
+
+        @keyframes float {
+            0%, 100% { transform: translate(0, 0) scale(1); }
+            25% { transform: translate(40px, -30px) scale(1.05); }
+            50% { transform: translate(-20px, 40px) scale(0.95); }
+            75% { transform: translate(30px, 20px) scale(1.02); }
+        }
+
+        /* ========== LAYOUT ========== */
+        .app-container {
+            position: relative;
+            z-index: 1;
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 24px;
+        }
+
+        /* ========== HEADER ========== */
+        .header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 20px 28px;
+            background: var(--bg-card);
+            backdrop-filter: blur(20px);
+            border: 1px solid var(--border-glass);
+            border-radius: var(--radius-xl);
+            margin-bottom: 28px;
+            animation: slideDown 0.6s ease-out;
+        }
+
+        @keyframes slideDown {
+            from { opacity: 0; transform: translateY(-20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .header-left {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+        }
+
+        .header-icon {
+            width: 48px; height: 48px;
+            background: linear-gradient(135deg, var(--accent-blue), var(--accent-purple));
+            border-radius: var(--radius-md);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 24px;
+            box-shadow: 0 4px 16px var(--accent-blue-glow);
+        }
+
+        .header-title {
+            font-size: 22px;
+            font-weight: 700;
+            background: linear-gradient(135deg, var(--text-primary), var(--accent-blue));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .header-subtitle {
+            font-size: 13px;
+            color: var(--text-muted);
+            font-weight: 400;
+        }
+
+        .header-badge {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 8px 16px;
+            background: rgba(16, 185, 129, 0.1);
+            border: 1px solid rgba(16, 185, 129, 0.2);
+            border-radius: var(--radius-lg);
+            color: var(--accent-green);
+            font-size: 13px;
+            font-weight: 500;
+        }
+
+        .header-badge .pulse {
+            width: 8px; height: 8px;
+            background: var(--accent-green);
+            border-radius: 50%;
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; box-shadow: 0 0 0 0 var(--accent-green-glow); }
+            50% { opacity: 0.7; box-shadow: 0 0 0 8px transparent; }
+        }
+
+        /* ========== STATS ROW ========== */
+        .stats-row {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 20px;
+            margin-bottom: 28px;
+        }
+
+        .stat-card {
+            background: var(--bg-card);
+            backdrop-filter: blur(20px);
+            border: 1px solid var(--border-glass);
+            border-radius: var(--radius-lg);
+            padding: 22px 24px;
+            transition: all var(--transition-med);
+            cursor: default;
+            animation: fadeUp 0.6s ease-out both;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .stat-card::before {
+            content: '';
+            position: absolute;
+            top: 0; left: 0;
+            width: 100%; height: 3px;
+            border-radius: var(--radius-lg) var(--radius-lg) 0 0;
+        }
+
+        .stat-card:nth-child(1)::before { background: linear-gradient(90deg, var(--accent-blue), var(--accent-cyan)); }
+        .stat-card:nth-child(2)::before { background: linear-gradient(90deg, var(--accent-green), #34d399); }
+        .stat-card:nth-child(3)::before { background: linear-gradient(90deg, var(--accent-orange), #fbbf24); }
+        .stat-card:nth-child(4)::before { background: linear-gradient(90deg, var(--accent-purple), var(--accent-pink)); }
+
+        .stat-card:nth-child(1) { animation-delay: 0.1s; }
+        .stat-card:nth-child(2) { animation-delay: 0.2s; }
+        .stat-card:nth-child(3) { animation-delay: 0.3s; }
+        .stat-card:nth-child(4) { animation-delay: 0.4s; }
+
+        .stat-card:hover {
+            border-color: var(--border-glass-hover);
+            transform: translateY(-3px);
+            box-shadow: var(--shadow-md);
+        }
+
+        .stat-icon {
+            width: 44px; height: 44px;
+            border-radius: var(--radius-md);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 20px;
+            margin-bottom: 14px;
+        }
+
+        .stat-card:nth-child(1) .stat-icon { background: rgba(59, 130, 246, 0.15); }
+        .stat-card:nth-child(2) .stat-icon { background: rgba(16, 185, 129, 0.15); }
+        .stat-card:nth-child(3) .stat-icon { background: rgba(245, 158, 11, 0.15); }
+        .stat-card:nth-child(4) .stat-icon { background: rgba(139, 92, 246, 0.15); }
+
+        .stat-label {
+            font-size: 13px;
+            color: var(--text-muted);
+            font-weight: 500;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-bottom: 4px;
+        }
+
+        .stat-value {
+            font-size: 32px;
+            font-weight: 800;
+            line-height: 1.1;
+        }
+
+        .stat-card:nth-child(1) .stat-value { color: var(--accent-blue); }
+        .stat-card:nth-child(2) .stat-value { color: var(--accent-green); }
+        .stat-card:nth-child(3) .stat-value { color: var(--accent-orange); }
+        .stat-card:nth-child(4) .stat-value { color: var(--accent-purple); }
+
+        .stat-detail {
+            font-size: 12px;
+            color: var(--text-secondary);
+            margin-top: 4px;
+        }
+
+        @keyframes fadeUp {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        /* ========== FILTERS ========== */
+        .filters-bar {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 16px 24px;
+            background: var(--bg-card);
+            backdrop-filter: blur(20px);
+            border: 1px solid var(--border-glass);
+            border-radius: var(--radius-lg);
+            margin-bottom: 28px;
+            animation: fadeUp 0.6s ease-out 0.3s both;
+            flex-wrap: wrap;
+        }
+
+        .filter-label {
+            font-size: 13px;
+            color: var(--text-muted);
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-right: 4px;
+        }
+
+        .filter-group {
+            display: flex;
+            gap: 6px;
+        }
+
+        .filter-btn {
+            padding: 8px 18px;
+            border: 1px solid var(--border-glass);
+            border-radius: var(--radius-sm);
+            background: transparent;
+            color: var(--text-secondary);
+            font-size: 13px;
+            font-family: 'Inter', sans-serif;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all var(--transition-fast);
+        }
+
+        .filter-btn:hover {
+            border-color: var(--accent-blue);
+            color: var(--accent-blue);
+            background: rgba(59, 130, 246, 0.08);
+        }
+
+        .filter-btn.active {
+            background: linear-gradient(135deg, var(--accent-blue), var(--accent-purple));
+            color: white;
+            border-color: transparent;
+            box-shadow: 0 2px 12px var(--accent-blue-glow);
+        }
+
+        .filter-divider {
+            width: 1px;
+            height: 28px;
+            background: var(--border-glass);
+            margin: 0 8px;
+        }
+
+        /* ========== MAIN GRID ========== */
+        .main-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 24px;
+            margin-bottom: 28px;
+        }
+
+        .card {
+            background: var(--bg-card);
+            backdrop-filter: blur(20px);
+            border: 1px solid var(--border-glass);
+            border-radius: var(--radius-lg);
+            padding: 24px;
+            transition: all var(--transition-med);
+            animation: fadeUp 0.6s ease-out 0.4s both;
+        }
+
+        .card:hover {
+            border-color: var(--border-glass-hover);
+        }
+
+        .card-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 20px;
+        }
+
+        .card-title {
+            font-size: 16px;
+            font-weight: 600;
+            color: var(--text-primary);
+        }
+
+        .card-badge {
+            font-size: 11px;
+            padding: 4px 10px;
+            border-radius: 20px;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        /* ========== CHART ========== */
+        .chart-container {
+            position: relative;
+            height: 260px;
+        }
+
+        /* ========== ACTIVITY TABLE ========== */
+        .activity-table-card {
+            grid-column: 1 / -1;
+            animation: fadeUp 0.6s ease-out 0.5s both;
+        }
+
+        .activity-table {
+            width: 100%;
+            border-collapse: separate;
+            border-spacing: 0;
+        }
+
+        .activity-table thead th {
+            text-align: left;
+            padding: 12px 16px;
+            font-size: 12px;
+            font-weight: 600;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            border-bottom: 1px solid var(--border-glass);
+        }
+
+        .activity-table tbody tr {
+            transition: all var(--transition-fast);
+            animation: fadeIn 0.4s ease-out both;
+        }
+
+        .activity-table tbody tr:hover {
+            background: rgba(59, 130, 246, 0.05);
+        }
+
+        .activity-table tbody td {
+            padding: 14px 16px;
+            font-size: 14px;
+            color: var(--text-secondary);
+            border-bottom: 1px solid rgba(255, 255, 255, 0.03);
+            vertical-align: middle;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+
+        .user-cell {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .user-avatar {
+            width: 34px; height: 34px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 14px;
+            font-weight: 700;
+            color: white;
+            flex-shrink: 0;
+        }
+
+        .user-avatar.ahmed { background: linear-gradient(135deg, var(--accent-blue), var(--accent-cyan)); }
+        .user-avatar.fatima { background: linear-gradient(135deg, var(--accent-pink), var(--accent-purple)); }
+        .user-avatar.omar { background: linear-gradient(135deg, var(--accent-green), #34d399); }
+
+        .user-name {
+            font-weight: 600;
+            color: var(--text-primary);
+        }
+
+        .activity-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 5px 12px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 600;
+        }
+
+        .activity-badge.running {
+            background: rgba(59, 130, 246, 0.12);
+            color: #60a5fa;
+        }
+        .activity-badge.cycling {
+            background: rgba(16, 185, 129, 0.12);
+            color: #34d399;
+        }
+        .activity-badge.strength_training {
+            background: rgba(245, 158, 11, 0.12);
+            color: #fbbf24;
+        }
+
+        .distance-bar {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .distance-track {
+            flex: 1;
+            height: 6px;
+            background: rgba(255, 255, 255, 0.06);
+            border-radius: 3px;
+            overflow: hidden;
+            max-width: 100px;
+        }
+
+        .distance-fill {
+            height: 100%;
+            border-radius: 3px;
+            background: linear-gradient(90deg, var(--accent-blue), var(--accent-cyan));
+            transition: width 1s ease-out;
+        }
+
+        .timestamp-cell {
+            font-size: 13px;
+            color: var(--text-muted);
+        }
+
+        /* ========== USER CARDS ROW ========== */
+        .users-row {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 20px;
+            margin-bottom: 28px;
+        }
+
+        .user-card {
+            background: var(--bg-card);
+            backdrop-filter: blur(20px);
+            border: 1px solid var(--border-glass);
+            border-radius: var(--radius-lg);
+            padding: 24px;
+            text-align: center;
+            transition: all var(--transition-med);
+            cursor: default;
+            animation: fadeUp 0.6s ease-out 0.6s both;
+        }
+
+        .user-card:hover {
+            transform: translateY(-4px);
+            border-color: var(--border-glass-hover);
+            box-shadow: var(--shadow-md);
+        }
+
+        .user-card-avatar {
+            width: 64px; height: 64px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 24px;
+            font-weight: 800;
+            color: white;
+            margin: 0 auto 16px;
+            position: relative;
+        }
+
+        .user-card-avatar::after {
+            content: '';
+            position: absolute;
+            inset: -3px;
+            border-radius: 50%;
+            border: 2px solid transparent;
+            animation: rotate 3s linear infinite;
+        }
+
+        .user-card:nth-child(1) .user-card-avatar { background: linear-gradient(135deg, var(--accent-blue), var(--accent-cyan)); }
+        .user-card:nth-child(1) .user-card-avatar::after { border-top-color: var(--accent-blue); border-right-color: var(--accent-cyan); }
+        .user-card:nth-child(2) .user-card-avatar { background: linear-gradient(135deg, var(--accent-pink), var(--accent-purple)); }
+        .user-card:nth-child(2) .user-card-avatar::after { border-top-color: var(--accent-pink); border-right-color: var(--accent-purple); }
+        .user-card:nth-child(3) .user-card-avatar { background: linear-gradient(135deg, var(--accent-green), #34d399); }
+        .user-card:nth-child(3) .user-card-avatar::after { border-top-color: var(--accent-green); border-right-color: #34d399; }
+
+        @keyframes rotate {
+            from { transform: rotate(0deg); }
+            to { transform: rotate(360deg); }
+        }
+
+        .user-card-name {
+            font-size: 16px;
+            font-weight: 700;
+            margin-bottom: 4px;
+        }
+
+        .user-card-handle {
+            font-size: 13px;
+            color: var(--text-muted);
+            margin-bottom: 16px;
+        }
+
+        .user-card-stats {
+            display: flex;
+            justify-content: center;
+            gap: 24px;
+        }
+
+        .user-card-stat {
+            text-align: center;
+        }
+
+        .user-card-stat-value {
+            font-size: 20px;
+            font-weight: 700;
+        }
+
+        .user-card-stat-label {
+            font-size: 11px;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        /* ========== ADD ACTIVITY MODAL ========== */
+        .modal-overlay {
+            position: fixed;
+            inset: 0;
+            background: rgba(0, 0, 0, 0.6);
+            backdrop-filter: blur(8px);
+            z-index: 1000;
+            display: none;
+            align-items: center;
+            justify-content: center;
+            animation: fadeIn 0.2s ease-out;
+        }
+
+        .modal-overlay.active {
+            display: flex;
+        }
+
+        .modal {
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-glass);
+            border-radius: var(--radius-xl);
+            padding: 32px;
+            width: 460px;
+            max-width: 90vw;
+            box-shadow: var(--shadow-lg);
+            animation: scaleIn 0.3s ease-out;
+        }
+
+        @keyframes scaleIn {
+            from { opacity: 0; transform: scale(0.95); }
+            to { opacity: 1; transform: scale(1); }
+        }
+
+        .modal-title {
+            font-size: 20px;
+            font-weight: 700;
+            margin-bottom: 24px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .form-group {
+            margin-bottom: 18px;
+        }
+
+        .form-label {
+            display: block;
+            font-size: 13px;
+            font-weight: 600;
+            color: var(--text-secondary);
+            margin-bottom: 6px;
+        }
+
+        .form-input, .form-select {
+            width: 100%;
+            padding: 10px 14px;
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid var(--border-glass);
+            border-radius: var(--radius-sm);
+            color: var(--text-primary);
+            font-family: 'Inter', sans-serif;
+            font-size: 14px;
+            transition: all var(--transition-fast);
+            outline: none;
+        }
+
+        .form-input:focus, .form-select:focus {
+            border-color: var(--accent-blue);
+            box-shadow: 0 0 0 3px var(--accent-blue-glow);
+        }
+
+        .form-select option {
+            background: var(--bg-secondary);
+            color: var(--text-primary);
+        }
+
+        .modal-actions {
+            display: flex;
+            gap: 12px;
+            margin-top: 24px;
+        }
+
+        .btn {
+            padding: 10px 24px;
+            border-radius: var(--radius-sm);
+            border: none;
+            font-family: 'Inter', sans-serif;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all var(--transition-fast);
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, var(--accent-blue), var(--accent-purple));
+            color: white;
+            box-shadow: 0 2px 12px var(--accent-blue-glow);
+            flex: 1;
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 4px 20px var(--accent-blue-glow);
+        }
+
+        .btn-ghost {
+            background: transparent;
+            border: 1px solid var(--border-glass);
+            color: var(--text-secondary);
+        }
+
+        .btn-ghost:hover {
+            border-color: var(--text-muted);
+            color: var(--text-primary);
+        }
+
+        .btn-add {
+            padding: 10px 20px;
+            border-radius: var(--radius-sm);
+            border: none;
+            background: linear-gradient(135deg, var(--accent-blue), var(--accent-purple));
+            color: white;
+            font-family: 'Inter', sans-serif;
+            font-size: 13px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all var(--transition-fast);
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            box-shadow: 0 2px 12px var(--accent-blue-glow);
+        }
+
+        .btn-add:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 4px 20px var(--accent-blue-glow);
+        }
+
+        /* ========== TOAST ========== */
+        .toast {
+            position: fixed;
+            bottom: 24px;
+            right: 24px;
+            padding: 14px 24px;
+            background: var(--bg-secondary);
+            border: 1px solid var(--accent-green);
+            border-radius: var(--radius-md);
+            color: var(--accent-green);
+            font-size: 14px;
+            font-weight: 500;
+            box-shadow: var(--shadow-md);
+            z-index: 2000;
+            animation: slideInRight 0.4s ease-out, fadeOut 0.4s ease-in 2.6s forwards;
+        }
+
+        @keyframes slideInRight {
+            from { opacity: 0; transform: translateX(40px); }
+            to { opacity: 1; transform: translateX(0); }
+        }
+
+        @keyframes fadeOut {
+            to { opacity: 0; transform: translateY(10px); }
+        }
+
+        /* ========== RESPONSIVE ========== */
+        @media (max-width: 1024px) {
+            .stats-row { grid-template-columns: repeat(2, 1fr); }
+            .main-grid { grid-template-columns: 1fr; }
+            .users-row { grid-template-columns: 1fr; }
+        }
+
+        @media (max-width: 640px) {
+            .app-container { padding: 12px; }
+            .stats-row { grid-template-columns: 1fr; }
+            .header { flex-direction: column; gap: 12px; text-align: center; }
+            .filters-bar { flex-direction: column; align-items: stretch; }
+            .filter-group { flex-wrap: wrap; }
+            .filter-divider { display: none; }
+        }
+
+        /* ========== EMPTY STATE ========== */
+        .empty-state {
+            text-align: center;
+            padding: 48px 24px;
+            color: var(--text-muted);
+        }
+
+        .empty-state-icon {
+            font-size: 48px;
+            margin-bottom: 16px;
+            opacity: 0.5;
+        }
+    </style>
+</head>
+<body>
+    <!-- Animated background -->
+    <div class="bg-gradient">
+        <div class="orb"></div>
+        <div class="orb"></div>
+        <div class="orb"></div>
+    </div>
+
+    <div class="app-container">
+        <!-- Header -->
+        <header class="header" id="header">
+            <div class="header-left">
+                <div class="header-icon">🏋️</div>
+                <div>
+                    <div class="header-title">Fitness Tracker</div>
+                    <div class="header-subtitle">Tableau de bord personnel — Neo4j Graph</div>
+                </div>
+            </div>
+            <div style="display: flex; gap: 12px; align-items: center;">
+                <div class="header-badge">
+                    <span class="pulse"></span>
+                    En ligne
+                </div>
+                <button class="btn-add" id="btn-open-modal" onclick="openModal()">
+                    <span>＋</span> Nouvelle activité
+                </button>
+            </div>
+        </header>
+
+        <!-- Stats Row -->
+        <section class="stats-row" id="stats-row">
+            <div class="stat-card">
+                <div class="stat-icon">🏃</div>
+                <div class="stat-label">Total Activités</div>
+                <div class="stat-value" id="stat-total">0</div>
+                <div class="stat-detail">Toutes les activités enregistrées</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-icon">📏</div>
+                <div class="stat-label">Distance Totale</div>
+                <div class="stat-value" id="stat-distance">0 km</div>
+                <div class="stat-detail">Kilomètres parcourus</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-icon">⏱️</div>
+                <div class="stat-label">Durée Totale</div>
+                <div class="stat-value" id="stat-duration">0 min</div>
+                <div class="stat-detail">Minutes d'entraînement</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-icon">👥</div>
+                <div class="stat-label">Utilisateurs</div>
+                <div class="stat-value" id="stat-users">0</div>
+                <div class="stat-detail">Membres actifs</div>
+            </div>
+        </section>
+
+        <!-- User Cards -->
+        <section class="users-row" id="users-row"></section>
+
+        <!-- Filters -->
+        <div class="filters-bar" id="filters-bar">
+            <span class="filter-label">👤 Utilisateur</span>
+            <div class="filter-group" id="user-filters"></div>
+            <div class="filter-divider"></div>
+            <span class="filter-label">🏷️ Activité</span>
+            <div class="filter-group" id="type-filters"></div>
+        </div>
+
+        <!-- Charts Grid -->
+        <div class="main-grid">
+            <div class="card">
+                <div class="card-header">
+                    <span class="card-title">📊 Distance par activité</span>
+                    <span class="card-badge" style="background: rgba(59,130,246,0.12); color: #60a5fa;">Graphique</span>
+                </div>
+                <div class="chart-container">
+                    <canvas id="chart-distance"></canvas>
+                </div>
+            </div>
+            <div class="card">
+                <div class="card-header">
+                    <span class="card-title">⏱️ Durée par utilisateur</span>
+                    <span class="card-badge" style="background: rgba(139,92,246,0.12); color: #a78bfa;">Répartition</span>
+                </div>
+                <div class="chart-container">
+                    <canvas id="chart-duration"></canvas>
+                </div>
+            </div>
+        </div>
+
+        <!-- Activity Table -->
+        <div class="card activity-table-card">
+            <div class="card-header">
+                <span class="card-title">📋 Historique des activités</span>
+                <span class="card-badge" style="background: rgba(16,185,129,0.12); color: #34d399;" id="table-count">0 activités</span>
+            </div>
+            <div id="table-body-wrapper">
+                <table class="activity-table">
+                    <thead>
+                        <tr>
+                            <th>Utilisateur</th>
+                            <th>Activité</th>
+                            <th>Distance</th>
+                            <th>Durée</th>
+                            <th>Date</th>
+                        </tr>
+                    </thead>
+                    <tbody id="activity-tbody"></tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- Add Activity Modal -->
+    <div class="modal-overlay" id="modal-overlay">
+        <div class="modal">
+            <div class="modal-title">🏋️ Nouvelle Activité</div>
+            <div class="form-group">
+                <label class="form-label" for="input-user">Utilisateur</label>
+                <select class="form-select" id="input-user">
+                    <option value="ahmed_hassan">Ahmed Hassan</option>
+                    <option value="fatima_ali">Fatima Ali</option>
+                    <option value="omar_mahmoud">Omar Mahmoud</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label class="form-label" for="input-type">Type d'activité</label>
+                <select class="form-select" id="input-type">
+                    <option value="running">🏃 Course</option>
+                    <option value="cycling">🚴 Vélo</option>
+                    <option value="strength_training">💪 Musculation</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label class="form-label" for="input-distance">Distance (km)</label>
+                <input class="form-input" type="number" id="input-distance" min="0" step="0.1" value="5">
+            </div>
+            <div class="form-group">
+                <label class="form-label" for="input-duration">Durée (minutes)</label>
+                <input class="form-input" type="number" id="input-duration" min="1" step="1" value="30">
+            </div>
+            <div class="modal-actions">
+                <button class="btn btn-ghost" onclick="closeModal()">Annuler</button>
+                <button class="btn btn-primary" id="btn-submit" onclick="addActivity()">Ajouter</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // ========== DATA ==========
+        const USER_DISPLAY = {
+            ahmed_hassan: { name: 'Ahmed Hassan', initials: 'AH', avatarClass: 'ahmed' },
+            fatima_ali: { name: 'Fatima Ali', initials: 'FA', avatarClass: 'fatima' },
+            omar_mahmoud: { name: 'Omar Mahmoud', initials: 'OM', avatarClass: 'omar' },
+        };
+
+        const ACTIVITY_DISPLAY = {
+            running: { label: 'Course', icon: '🏃' },
+            cycling: { label: 'Vélo', icon: '🚴' },
+            strength_training: { label: 'Musculation', icon: '💪' },
+        };
+
+        function daysAgo(days) {
+            const d = new Date();
+            d.setDate(d.getDate() - days);
+            return d.toISOString();
+        }
+
+        let activities = [
+            { user: 'ahmed_hassan', activity_id: 'a1', activity_type: 'running', distance_km: 6.0, duration_min: 35, timestamp: daysAgo(7) },
+            { user: 'fatima_ali', activity_id: 'a2', activity_type: 'cycling', distance_km: 20.0, duration_min: 60, timestamp: daysAgo(3) },
+            { user: 'omar_mahmoud', activity_id: 'a3', activity_type: 'running', distance_km: 4.0, duration_min: 25, timestamp: daysAgo(2) },
+            { user: 'ahmed_hassan', activity_id: 'a4', activity_type: 'running', distance_km: 8.0, duration_min: 45, timestamp: daysAgo(1) },
+            { user: 'fatima_ali', activity_id: 'a5', activity_type: 'strength_training', distance_km: 0, duration_min: 60, timestamp: daysAgo(1) },
+        ];
+
+        let activeUserFilter = 'all';
+        let activeTypeFilter = 'all';
+        let activityCounter = 100;
+        let distanceChart = null;
+        let durationChart = null;
+
+        // ========== FILTERS ==========
+        function buildFilters() {
+            const userGroup = document.getElementById('user-filters');
+            const typeGroup = document.getElementById('type-filters');
+
+            let userHTML = `<button class="filter-btn active" data-filter="all" onclick="setUserFilter('all')">Tous</button>`;
+            for (const [key, val] of Object.entries(USER_DISPLAY)) {
+                userHTML += `<button class="filter-btn" data-filter="${key}" onclick="setUserFilter('${key}')">${val.name}</button>`;
+            }
+            userGroup.innerHTML = userHTML;
+
+            let typeHTML = `<button class="filter-btn active" data-filter="all" onclick="setTypeFilter('all')">Tous</button>`;
+            for (const [key, val] of Object.entries(ACTIVITY_DISPLAY)) {
+                typeHTML += `<button class="filter-btn" data-filter="${key}" onclick="setTypeFilter('${key}')">${val.icon} ${val.label}</button>`;
+            }
+            typeGroup.innerHTML = typeHTML;
+        }
+
+        function setUserFilter(user) {
+            activeUserFilter = user;
+            document.querySelectorAll('#user-filters .filter-btn').forEach(btn => {
+                btn.classList.toggle('active', btn.dataset.filter === user);
+            });
+            render();
+        }
+
+        function setTypeFilter(type) {
+            activeTypeFilter = type;
+            document.querySelectorAll('#type-filters .filter-btn').forEach(btn => {
+                btn.classList.toggle('active', btn.dataset.filter === type);
+            });
+            render();
+        }
+
+        function getFiltered() {
+            return activities.filter(a => {
+                if (activeUserFilter !== 'all' && a.user !== activeUserFilter) return false;
+                if (activeTypeFilter !== 'all' && a.activity_type !== activeTypeFilter) return false;
+                return true;
+            });
+        }
+
+        // ========== STATS ==========
+        function updateStats() {
+            const filtered = getFiltered();
+            const totalDist = filtered.reduce((s, a) => s + a.distance_km, 0);
+            const totalDur = filtered.reduce((s, a) => s + a.duration_min, 0);
+            const users = new Set(filtered.map(a => a.user));
+
+            animateNumber('stat-total', filtered.length);
+            document.getElementById('stat-distance').textContent = totalDist.toFixed(1) + ' km';
+            document.getElementById('stat-duration').textContent = totalDur + ' min';
+            animateNumber('stat-users', users.size);
+        }
+
+        function animateNumber(id, target) {
+            const el = document.getElementById(id);
+            const current = parseInt(el.textContent) || 0;
+            if (current === target) return;
+
+            let frame = 0;
+            const totalFrames = 30;
+            const step = (target - current) / totalFrames;
+
+            function tick() {
+                frame++;
+                const val = Math.round(current + step * frame);
+                el.textContent = val;
+                if (frame < totalFrames) requestAnimationFrame(tick);
+                else el.textContent = target;
+            }
+            requestAnimationFrame(tick);
+        }
+
+        // ========== USER CARDS ==========
+        function renderUserCards() {
+            const container = document.getElementById('users-row');
+            const colors = [
+                { val: 'var(--accent-blue)', glow: 'var(--accent-blue-glow)' },
+                { val: 'var(--accent-pink)', glow: 'var(--accent-pink-glow)' },
+                { val: 'var(--accent-green)', glow: 'var(--accent-green-glow)' },
+            ];
+
+            let html = '';
+            let i = 0;
+            for (const [key, u] of Object.entries(USER_DISPLAY)) {
+                const userActs = activities.filter(a => a.user === key);
+                const dist = userActs.reduce((s, a) => s + a.distance_km, 0);
+                const dur = userActs.reduce((s, a) => s + a.duration_min, 0);
+
+                html += `
+                    <div class="user-card">
+                        <div class="user-card-avatar">${u.initials}</div>
+                        <div class="user-card-name">${u.name}</div>
+                        <div class="user-card-handle">@${key}</div>
+                        <div class="user-card-stats">
+                            <div class="user-card-stat">
+                                <div class="user-card-stat-value" style="color: ${colors[i].val}">${userActs.length}</div>
+                                <div class="user-card-stat-label">Activités</div>
+                            </div>
+                            <div class="user-card-stat">
+                                <div class="user-card-stat-value" style="color: ${colors[i].val}">${dist.toFixed(1)}</div>
+                                <div class="user-card-stat-label">Km</div>
+                            </div>
+                            <div class="user-card-stat">
+                                <div class="user-card-stat-value" style="color: ${colors[i].val}">${dur}</div>
+                                <div class="user-card-stat-label">Min</div>
+                            </div>
+                        </div>
+                    </div>
+                `;
+                i++;
+            }
+            container.innerHTML = html;
+        }
+
+        // ========== TABLE ==========
+        function renderTable() {
+            const filtered = getFiltered();
+            const tbody = document.getElementById('activity-tbody');
+            const maxDist = Math.max(...activities.map(a => a.distance_km), 1);
+
+            document.getElementById('table-count').textContent = filtered.length + ' activité' + (filtered.length !== 1 ? 's' : '');
+
+            if (filtered.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="5"><div class="empty-state"><div class="empty-state-icon">🔍</div><p>Aucune activité trouvée avec ces filtres</p></div></td></tr>`;
+                return;
+            }
+
+            // Sort by date desc
+            const sorted = [...filtered].sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
+
+            tbody.innerHTML = sorted.map((a, idx) => {
+                const u = USER_DISPLAY[a.user] || { name: a.user, initials: '?', avatarClass: '' };
+                const act = ACTIVITY_DISPLAY[a.activity_type] || { label: a.activity_type, icon: '🏅' };
+                const pct = maxDist > 0 ? Math.round((a.distance_km / maxDist) * 100) : 0;
+                const dateStr = new Date(a.timestamp).toLocaleDateString('fr-FR', { day: 'numeric', month: 'short', year: 'numeric' });
+                const timeStr = new Date(a.timestamp).toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' });
+
+                return `
+                    <tr style="animation-delay: ${idx * 0.05}s">
+                        <td>
+                            <div class="user-cell">
+                                <div class="user-avatar ${u.avatarClass}">${u.initials}</div>
+                                <span class="user-name">${u.name}</span>
+                            </div>
+                        </td>
+                        <td><span class="activity-badge ${a.activity_type}">${act.icon} ${act.label}</span></td>
+                        <td>
+                            <div class="distance-bar">
+                                <span>${a.distance_km} km</span>
+                                <div class="distance-track"><div class="distance-fill" style="width: ${pct}%"></div></div>
+                            </div>
+                        </td>
+                        <td>${a.duration_min} min</td>
+                        <td class="timestamp-cell">${dateStr}<br>${timeStr}</td>
+                    </tr>
+                `;
+            }).join('');
+        }
+
+        // ========== CHARTS ==========
+        function renderCharts() {
+            const filtered = getFiltered();
+
+            // Distance bar chart
+            const labels = filtered.map(a => {
+                const u = USER_DISPLAY[a.user] || { name: a.user };
+                const act = ACTIVITY_DISPLAY[a.activity_type] || { label: a.activity_type };
+                return u.name.split(' ')[0] + ' - ' + act.label;
+            });
+
+            const distData = filtered.map(a => a.distance_km);
+            const barColors = filtered.map(a => {
+                if (a.activity_type === 'running') return 'rgba(59, 130, 246, 0.8)';
+                if (a.activity_type === 'cycling') return 'rgba(16, 185, 129, 0.8)';
+                return 'rgba(245, 158, 11, 0.8)';
+            });
+
+            if (distanceChart) distanceChart.destroy();
+            distanceChart = new Chart(document.getElementById('chart-distance'), {
+                type: 'bar',
+                data: {
+                    labels,
+                    datasets: [{
+                        label: 'Distance (km)',
+                        data: distData,
+                        backgroundColor: barColors,
+                        borderRadius: 6,
+                        borderSkipped: false,
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { display: false },
+                        tooltip: {
+                            backgroundColor: 'rgba(17,24,39,0.95)',
+                            titleColor: '#f1f5f9',
+                            bodyColor: '#94a3b8',
+                            borderColor: 'rgba(255,255,255,0.1)',
+                            borderWidth: 1,
+                            cornerRadius: 8,
+                            padding: 12,
+                        }
+                    },
+                    scales: {
+                        x: {
+                            ticks: { color: '#64748b', font: { size: 11 } },
+                            grid: { display: false },
+                            border: { display: false },
+                        },
+                        y: {
+                            ticks: { color: '#64748b', font: { size: 11 } },
+                            grid: { color: 'rgba(255,255,255,0.04)' },
+                            border: { display: false },
+                        }
+                    }
+                }
+            });
+
+            // Duration doughnut chart
+            const userDurations = {};
+            const doughnutColors = ['rgba(59,130,246,0.8)', 'rgba(236,72,153,0.8)', 'rgba(16,185,129,0.8)'];
+            filtered.forEach(a => {
+                const name = (USER_DISPLAY[a.user] || { name: a.user }).name;
+                userDurations[name] = (userDurations[name] || 0) + a.duration_min;
+            });
+
+            if (durationChart) durationChart.destroy();
+            durationChart = new Chart(document.getElementById('chart-duration'), {
+                type: 'doughnut',
+                data: {
+                    labels: Object.keys(userDurations),
+                    datasets: [{
+                        data: Object.values(userDurations),
+                        backgroundColor: doughnutColors.slice(0, Object.keys(userDurations).length),
+                        borderWidth: 0,
+                        spacing: 3,
+                        borderRadius: 4,
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    cutout: '65%',
+                    plugins: {
+                        legend: {
+                            position: 'bottom',
+                            labels: {
+                                color: '#94a3b8',
+                                padding: 16,
+                                font: { size: 12, family: 'Inter' },
+                                usePointStyle: true,
+                                pointStyleWidth: 10,
+                            }
+                        },
+                        tooltip: {
+                            backgroundColor: 'rgba(17,24,39,0.95)',
+                            titleColor: '#f1f5f9',
+                            bodyColor: '#94a3b8',
+                            borderColor: 'rgba(255,255,255,0.1)',
+                            borderWidth: 1,
+                            cornerRadius: 8,
+                            padding: 12,
+                            callbacks: {
+                                label: ctx => ` ${ctx.label}: ${ctx.parsed} min`
+                            }
+                        }
+                    }
+                }
+            });
+        }
+
+        // ========== MODAL ==========
+        function openModal() {
+            document.getElementById('modal-overlay').classList.add('active');
+        }
+
+        function closeModal() {
+            document.getElementById('modal-overlay').classList.remove('active');
+        }
+
+        function addActivity() {
+            const user = document.getElementById('input-user').value;
+            const type = document.getElementById('input-type').value;
+            const distance = parseFloat(document.getElementById('input-distance').value) || 0;
+            const duration = parseInt(document.getElementById('input-duration').value) || 1;
+
+            activityCounter++;
+            activities.push({
+                user,
+                activity_id: 'a_' + activityCounter,
+                activity_type: type,
+                distance_km: distance,
+                duration_min: duration,
+                timestamp: new Date().toISOString(),
+            });
+
+            closeModal();
+            render();
+            showToast('Activité ajoutée avec succès !');
+        }
+
+        function showToast(msg) {
+            const toast = document.createElement('div');
+            toast.className = 'toast';
+            toast.textContent = '✅ ' + msg;
+            document.body.appendChild(toast);
+            setTimeout(() => toast.remove(), 3000);
+        }
+
+        // Close modal on overlay click
+        document.getElementById('modal-overlay').addEventListener('click', e => {
+            if (e.target === e.currentTarget) closeModal();
+        });
+
+        // Close modal on Escape
+        document.addEventListener('keydown', e => {
+            if (e.key === 'Escape') closeModal();
+        });
+
+        // ========== RENDER ALL ==========
+        function render() {
+            updateStats();
+            renderUserCards();
+            renderTable();
+            renderCharts();
+        }
+
+        // ========== INIT ==========
+        buildFilters();
+        render();
+    </script>
+</body>
+</html>
