@@ -1,0 +1,5 @@
+streamlit==1.41.1
+agno==2.8.7
+mistralai==2.9.3
+python-dotenv==1.2.1
+pydantic==2.13.4
