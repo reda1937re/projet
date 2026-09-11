@@ -1,0 +1,181 @@
+C:\Users\user\AppData\Local\Programs\Python\Python313\Lib\site-packages\requests\__init__.py:113: RequestsDependencyWarning: urllib3 (2.6.3) or chardet (7.6.0)/charset_normalizer (3.4.5) doesn't match a supported version!
+  warnings.warn(
+Enter your products list separated by commas: Enter your business location (city, country): Searching for: vendors suppliers office chairs, laptops Casablanca, Morocco prices purchasing procurement
+C:\Users\user\Downloads\Talent-Performer-Projects-main\Talent-Performer-Projects-main\31-Procurement-agent\procurement_agent.py:40: DeprecationWarning: search_and_contents() is deprecated. Use search() instead; search() returns text contents by default.
+  results = exa.search_and_contents(
+Error in exa_search: HTTPSConnectionPool(host='api.exa.ai', port=443): Max retries exceeded with url: /search (Caused by SSLError(SSLEOFError(8, '[SSL: UNEXPECTED_EOF_WHILE_READING] EOF occurred in violation of protocol (_ssl.c:1018)')))
+Trying fallback search...
+Fallback search also failed: HTTPSConnectionPool(host='api.exa.ai', port=443): Max retries exceeded with url: /search (Caused by SSLError(SSLEOFError(8, '[SSL: UNEXPECTED_EOF_WHILE_READING] EOF occurred in violation of protocol (_ssl.c:1018)')))
+DEBUG *************** Agent ID: procurement-agent ****************             
+DEBUG Creating new AgentSession: 9e435510-216a-4e8f-81e7-1670e5a042ce          
+DEBUG ** Agent Run Start: a23e2edc-2bc4-40c7-a618-3c3862b70270 ***             
+DEBUG Processing tools for model                                               
+DEBUG Added tool save_to_file_and_run from python_tools                        
+DEBUG Added tool run_python_code from python_tools                             
+DEBUG Added tool pip_install_package from python_tools                         
+DEBUG Added tool uv_pip_install_package from python_tools                      
+DEBUG Added tool run_python_file_return_variable from python_tools             
+DEBUG Added tool read_file from python_tools                                   
+DEBUG Added tool list_files from python_tools                                  
+DEBUG ------------ OpenAI Chat Response Stream Start -------------             
+DEBUG ---------------------- Model: gpt-4o -----------------------             
+DEBUG ========================== system ==========================             
+DEBUG You are a procurement analysis agent.                                    
+                                                                               
+      Your goal is to:                                                         
+      1. Parse the search results from Exa containing information about vendors
+      and suppliers.                                                           
+      2. For each relevant product/vendor combination found, extract the       
+      following fields:                                                        
+          - Product Name                                                       
+          - Vendor Name                                                        
+          - Product Title                                                      
+          - Price (if mentioned, convert to numeric if possible)               
+          - Currency (if mentioned)                                            
+          - Vendor Website or Purchase Link                                    
+          - Short Product Description                                          
+          - Minimum Order Quantity (if available)                              
+          - Shipping Time (if available)                                       
+          - Bulk Discounts or Deals (if available)                             
+          - Vendor Location (if mentioned)                                     
+                                                                               
+      3. After extracting the data, write and execute a Python script that     
+      creates a file named `data.csv`                                          
+          - Use the standard `csv` module                                      
+          - Make the columns in this order: Product Name, Vendor Name, Product 
+      Title, Price, Currency, Bulk Discounts or Deals, Vendor Website, Short   
+      Product Description, Minimum Order Quantity, Shipping Time, Vendor       
+      Location                                                                 
+          - The script should write a header row followed by one row per       
+      vendor/product combination                                               
+          - IMPORTANT: When opening the file, always use encoding='utf-8' in   
+      open(), e.g. open('data.csv', 'w', newline='', encoding='utf-8')         
+          - Then use the PythonTools tool to run the script and save the data  
+          - Create rows for each relevant data point found in the search       
+      results                                                                  
+                                                                               
+      Then:                                                                    
+                                                                               
+      4. Analyze the data across all products and vendors.                     
+          - Compare vendors based on pricing, shipping times, minimum          
+      quantities, and available deals.                                         
+          - Prioritize vendors who:                                            
+              - Deliver to the specified location                              
+              - Offer competitive prices                                       
+              - Have favorable shipping times or bulk deals                    
+              - Appear reliable (from established marketplaces or verified     
+      sellers)                                                                 
+                                                                               
+      5. Write an executive summary that includes:                             
+          - Recommended vendor(s) per product (if clear recommendations can be 
+      made)                                                                    
+          - Reasons for the recommendation (price, location, delivery, etc.)   
+          - Any noteworthy observations (e.g. pricing differences, available   
+      options)                                                                 
+          - Limitations of the search results (if search quality was limited)  
+                                                                               
+      IMPORTANT:                                                               
+      - Use PythonTools to write the extracted data to `data.csv`.             
+      - If search results are limited or don't contain specific pricing/vendor 
+      info, acknowledge this in your analysis.                                 
+      - Focus on extracting whatever relevant information is available from the
+      search results.                                                          
+                                                                               
+                                                                               
+      <additional_information>                                                 
+      - Use markdown to format your answers.                                   
+      </additional_information>                                                
+                                                                               
+      <expected_output>                                                        
+      The output should include:                                               
+                                                                               
+      1. 📊 Data Summary:                                                      
+      - Number of relevant results processed                                   
+      - Total vendors/suppliers identified                                     
+      - Location considered for delivery: <city>, <country>                    
+      - Data quality assessment and any limitations                            
+                                                                               
+      2. 🏆 Recommendations Per Product:                                       
+      For each product found (e.g., "banane", "pomme"), provide:               
+                                                                               
+      ### Product: <Product Name>                                              
+                                                                               
+      **Available Options Found:**                                             
+      - List the vendors/suppliers found with their key details                
+                                                                               
+      **Best Option (if determinable):** <Vendor Business Name>                
+      **Why Recommended:**                                                     
+      - Reason 1 (e.g. local supplier, competitive pricing mentioned)          
+      - Reason 2 (e.g. established marketplace presence)                       
+      - Reason 3 (e.g. good shipping options or bulk availability)             
+                                                                               
+      **Alternative Options:**                                                 
+      - Mention other viable vendors if found                                  
+                                                                               
+      **Data Quality Note:**                                                   
+      - Acknowledge any limitations in the search results                      
+      - Mention if specific pricing or delivery info was not available         
+                                                                               
+      IMPORTANT: Confirm that the CSV file was created and contains the        
+      extracted data.                                                          
+      </expected_output>                                                       
+DEBUG =========================== user ===========================             
+DEBUG                                                                          
+      # Search Error                                                           
+                                                                               
+      Unable to perform search for products: office chairs, laptops in         
+      location: Casablanca, Morocco                                            
+                                                                               
+      Error details: HTTPSConnectionPool(host='api.exa.ai', port=443): Max     
+      retries exceeded with url: /search (Caused by SSLError(SSLEOFError(8,    
+      '[SSL: UNEXPECTED_EOF_WHILE_READING] EOF occurred in violation of        
+      protocol (_ssl.c:1018)')))                                               
+                                                                               
+      Please check your Exa API key and try again.                             
+                                                                               
+DEBUG Creating new sync OpenAI client for model gpt-4o                         
+DEBUG ======================== assistant =========================             
+DEBUG It seems there is an issue with connecting to the Exa API due to an SSL  
+      error. This might be due to a temporary network issue, incorrect API key,
+      or server side problem.                                                  
+                                                                               
+      To move forward, we have a few options:                                  
+                                                                               
+      1. **Check API Key**: Ensure that your API key is correct and hasn't     
+      expired.                                                                 
+                                                                               
+      2. **Retry**: Attempt to perform the search again after some time.       
+      Temporary network or server issues can sometimes resolve themselves.     
+                                                                               
+      3. **Alternate Sources**: If we can't use Exa, consider using other      
+      methods to gather vendor and product information, such as via web        
+      scraping or using another API.                                           
+                                                                               
+      If you want to troubleshoot or would like assistance with an alternative 
+      approach, feel free to let me know!                                      
+DEBUG ************************  METRICS  *************************             
+DEBUG * Tokens:                      input=1309, output=150, total=1459        
+DEBUG * Duration:                    61.4144s                                  
+DEBUG * Tokens per second:           2.4424 tokens/s                           
+DEBUG * Time to first token:         55.8873s                                  
+DEBUG ************************  METRICS  *************************             
+DEBUG ------------- OpenAI Chat Response Stream End --------------             
+DEBUG Added RunOutput to Agent Session                                         
+DEBUG *** Agent Run End: a23e2edc-2bc4-40c7-a618-3c3862b70270 ****             
+┌─────────────────────────────────────────────────────────────────────────────┐
+│ It seems there is an issue with connecting to the Exa API due to an SSL     │
+│ error. This might be due to a temporary network issue, incorrect API key,   │
+│ or server side problem.                                                     │
+│                                                                             │
+│ To move forward, we have a few options:                                     │
+│                                                                             │
+│  1 Check API Key: Ensure that your API key is correct and hasn't expired.   │
+│  2 Retry: Attempt to perform the search again after some time. Temporary    │
+│    network or server issues can sometimes resolve themselves.               │
+│  3 Alternate Sources: If we can't use Exa, consider using other methods to  │
+│    gather vendor and product information, such as via web scraping or using │
+│    another API.                                                             │
+│                                                                             │
+│ If you want to troubleshoot or would like assistance with an alternative    │
+│ approach, feel free to let me know!                                         │
+└─────────────────────────────────────────────────────────────────────────────┘
