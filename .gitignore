@@ -1,0 +1,15 @@
+.env
+Dockerfile
+client_secret.json
+
+# Dependances / environnements
+node_modules/
+__pycache__/
+*.pyc
+.venv/
+venv/
+
+# Donnees generees a l'execution (pas du code source)
+*.db
+auth_info/
+.DS_Store
